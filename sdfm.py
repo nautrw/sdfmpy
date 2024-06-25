@@ -33,7 +33,14 @@ def init():
             print("Keeping file contents. Cannot proceed.")
             exit()
 
-    print(f"Initialized sdfmpy in {path}")
+    print("Initialized sdfmpy in directory")
+
+
+@app.command()
+def add(
+    file: Annotated[str, typer.Argument(help="The file to add and track with sdfmpy")]
+):
+    pass
 
 
 app()
