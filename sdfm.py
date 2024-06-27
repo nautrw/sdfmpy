@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import typing
 from pathlib import Path
 
 import typer
@@ -41,26 +40,37 @@ def init():
 def add(path: Annotated[str, typer.Argument(help="The path to add")]):
     """Adds a path to sdfmpy"""
 
-    if not os.path.exists(path):
-        exit("Invalid path. Cannot proceed.")
+    if not os.path.isfile(".sdfmpy.json"):
+        exit("sdfmpy.json file not found. Cannot proceed. Run 'sdfmpy init' first.")
+
+    home_directory = Path.home()
+    target_path = Path(path)
+
+    if not target_path.exists():
+        exit("Path given does not exist. Cannot proceed.")
+
+    relative_path = target_path.relative_to(home_directory)
 
     with open(".sdfmpy.json", "r") as file:
         data = json.load(file)
-        data.append(path)
+
+    if str(relative_path) in data:
+        exit("Path is already added. Cannot proceed.")
+
+    data.append(str(relative_path))
 
     with open(".sdfmpy.json", "w") as file:
         json.dump(data, file, indent=2)
 
-    path_obj = Path(path)
-    target_dir = Path.cwd() / path_obj.name
+    destination_directory = Path.cwd() / relative_path.parent
+    destination_directory.mkdir(parents=True, exist_ok=True)
 
-    if path_obj.is_dir():
-        shutil.copytree(path, target_dir)
+    if target_path.is_dir():
+        shutil.copytree(target_path, destination_directory / target_path.name)
     else:
-        target_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy(path, target_dir)
+        shutil.copy2(target_path, destination_directory)
 
-    print(f"Added {path} to sdfmpy and cloned it to {target_dir}")
+    print("Added path to sdfmpy")
 
 
 app()
